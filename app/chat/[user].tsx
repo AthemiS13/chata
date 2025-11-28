@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -44,7 +45,6 @@ export default function ChatScreen() {
             // Keep padding constant to avoid jumps.
             // The offset in KeyboardStickyView will handle the positioning.
             paddingBottom: insets.bottom + 10,
-            backgroundColor: '#0A0A0A',
         };
     });
 
@@ -90,6 +90,7 @@ export default function ChatScreen() {
 
             <KeyboardStickyView offset={{ closed: 0, opened: insets.bottom }}>
                 <Animated.View style={[styles.inputContainer, animatedInputContainerStyle]}>
+                    <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
                     <TextInput
                         style={styles.input}
                         placeholder="Message..."
