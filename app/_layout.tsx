@@ -2,6 +2,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { View } from 'react-native';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { AuthProvider, useAuth } from '../ctx/AuthContext';
 
 function RootLayoutNav() {
@@ -33,7 +34,6 @@ function RootLayoutNav() {
           headerStyle: { backgroundColor: '#18181B' },
           headerShadowVisible: false, // Remove shadow/border
           headerTintColor: '#fff',
-          headerBackTitleVisible: false,
         }} />
       </Stack>
     </View>
@@ -48,7 +48,9 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <ChatProvider>
-        <RootLayoutNav />
+        <KeyboardProvider>
+          <RootLayoutNav />
+        </KeyboardProvider>
       </ChatProvider>
     </AuthProvider>
   );

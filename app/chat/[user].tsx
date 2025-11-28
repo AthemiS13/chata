@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useHeaderHeight } from '@react-navigation/elements';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { FlatList, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { KeyboardStickyView, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOCK_USERS } from '../../data/mockUsers';
 
@@ -13,12 +14,13 @@ import { useChat } from '../../ctx/ChatContext';
 export default function ChatScreen() {
     const { user } = useLocalSearchParams();
     const [message, setMessage] = useState('');
-    const [isKeyboardVisible, setKeyboardVisible] = useState(false);
     const { messages, sendMessage, getMessages } = useChat();
     const { session } = useAuth();
     const router = useRouter();
     const insets = useSafeAreaInsets();
-    const headerHeight = useHeaderHeight();
+
+    // Keyboard animation
+    const { height, progress } = useReanimatedKeyboardAnimation();
 
     const currentUser = MOCK_USERS.find(u => u.username === user);
     const displayName = currentUser ? currentUser.name : user;
@@ -26,28 +28,24 @@ export default function ChatScreen() {
 
     const chatMessages = getMessages(user as string);
 
-    useEffect(() => {
-        const keyboardWillShowListener = Keyboard.addListener(
-            'keyboardWillShow',
-            () => setKeyboardVisible(true)
-        );
-        const keyboardWillHideListener = Keyboard.addListener(
-            'keyboardWillHide',
-            () => setKeyboardVisible(false)
-        );
-
-        return () => {
-            keyboardWillShowListener.remove();
-            keyboardWillHideListener.remove();
-        };
-    }, []);
-
     const handleSend = async () => {
         if (message.trim()) {
             await sendMessage(user as string, message);
             setMessage('');
         }
     };
+
+    const animatedListStyle = useAnimatedStyle(() => ({
+        marginBottom: height.value,
+    }));
+
+    const animatedInputContainerStyle = useAnimatedStyle(() => {
+        const padding = (1 - progress.value) * insets.bottom + 10;
+        return {
+            paddingBottom: padding,
+            backgroundColor: '#0A0A0A', // Fix background disappearance
+        };
+    });
 
     return (
         <View style={styles.container}>
@@ -65,15 +63,11 @@ export default function ChatScreen() {
                 ),
             }} />
 
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={headerHeight}
-                style={styles.keyboardAvoidingView}
-            >
+            <Animated.View style={[{ flex: 1 }, animatedListStyle]}>
                 <FlatList
                     data={chatMessages}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
+                    keyExtractor={(item: any) => item.id}
+                    renderItem={({ item }: { item: any }) => (
                         <View style={[
                             styles.messageBubble,
                             item.sender === session ? styles.myMessage : styles.theirMessage
@@ -87,8 +81,10 @@ export default function ChatScreen() {
                     contentContainerStyle={styles.messageList}
                     inverted={false}
                 />
+            </Animated.View>
 
-                <View style={[styles.inputContainer, { paddingBottom: 10 + (isKeyboardVisible ? 0 : insets.bottom) }]}>
+            <KeyboardStickyView offset={{ closed: 0, opened: 0 }}>
+                <Animated.View style={[styles.inputContainer, animatedInputContainerStyle]}>
                     <TextInput
                         style={styles.input}
                         placeholder="Message..."
@@ -99,8 +95,8 @@ export default function ChatScreen() {
                     <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
                         <Ionicons name="send" size={24} color="#FFFFFF" />
                     </TouchableOpacity>
-                </View>
-            </KeyboardAvoidingView>
+                </Animated.View>
+            </KeyboardStickyView>
         </View>
     );
 }
