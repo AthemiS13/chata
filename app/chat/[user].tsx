@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { KeyboardStickyView, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
+import { KeyboardGestureArea, KeyboardStickyView, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOCK_USERS } from '../../data/mockUsers';
@@ -40,10 +40,11 @@ export default function ChatScreen() {
     }));
 
     const animatedInputContainerStyle = useAnimatedStyle(() => {
-        const padding = (1 - progress.value) * insets.bottom + 10;
         return {
-            paddingBottom: padding,
-            backgroundColor: '#0A0A0A', // Fix background disappearance
+            // Keep padding constant to avoid jumps.
+            // The offset in KeyboardStickyView will handle the positioning.
+            paddingBottom: insets.bottom + 10,
+            backgroundColor: '#0A0A0A',
         };
     });
 
@@ -63,27 +64,31 @@ export default function ChatScreen() {
                 ),
             }} />
 
-            <Animated.View style={[{ flex: 1 }, animatedListStyle]}>
-                <FlatList
-                    data={chatMessages}
-                    keyExtractor={(item: any) => item.id}
-                    renderItem={({ item }: { item: any }) => (
-                        <View style={[
-                            styles.messageBubble,
-                            item.sender === session ? styles.myMessage : styles.theirMessage
-                        ]}>
-                            <Text style={styles.messageText}>{item.text}</Text>
-                            <Text style={styles.timestampText}>
-                                {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </Text>
-                        </View>
-                    )}
-                    contentContainerStyle={styles.messageList}
-                    inverted={false}
-                />
-            </Animated.View>
+            <KeyboardGestureArea style={{ flex: 1 }} interpolator="ios">
+                <Animated.View style={[{ flex: 1 }, animatedListStyle]}>
+                    <FlatList
+                        data={chatMessages}
+                        keyExtractor={(item: any) => item.id}
+                        renderItem={({ item }: { item: any }) => (
+                            <View style={[
+                                styles.messageBubble,
+                                item.sender === session ? styles.myMessage : styles.theirMessage
+                            ]}>
+                                <Text style={styles.messageText}>{item.text}</Text>
+                                <Text style={styles.timestampText}>
+                                    {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </Text>
+                            </View>
+                        )}
+                        contentContainerStyle={styles.messageList}
+                        inverted={false}
+                        keyboardDismissMode="interactive"
+                        keyboardShouldPersistTaps="handled"
+                    />
+                </Animated.View>
+            </KeyboardGestureArea>
 
-            <KeyboardStickyView offset={{ closed: 0, opened: 0 }}>
+            <KeyboardStickyView offset={{ closed: 0, opened: insets.bottom }}>
                 <Animated.View style={[styles.inputContainer, animatedInputContainerStyle]}>
                     <TextInput
                         style={styles.input}

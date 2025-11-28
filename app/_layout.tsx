@@ -2,6 +2,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { AuthProvider, useAuth } from '../ctx/AuthContext';
 
@@ -46,12 +47,14 @@ import { ChatProvider } from '../ctx/ChatContext';
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <ChatProvider>
-        <KeyboardProvider>
-          <RootLayoutNav />
-        </KeyboardProvider>
-      </ChatProvider>
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <ChatProvider>
+          <KeyboardProvider statusBarTranslucent>
+            <RootLayoutNav />
+          </KeyboardProvider>
+        </ChatProvider>
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }
