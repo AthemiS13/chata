@@ -24,15 +24,15 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Phone',
-          tabBarIcon: ({ color, size }) => <Ionicons name="call" size={24} color={color} />,
+          title: 'Messages',
+          tabBarIcon: ({ color, size }) => <Ionicons name="chatbubble" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="messages"
+        name="calls"
         options={{
-          title: 'Messages',
-          tabBarIcon: ({ color, size }) => <Ionicons name="chatbubble" size={24} color={color} />,
+          title: 'Phone',
+          tabBarIcon: ({ color, size }) => <Ionicons name="call" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
