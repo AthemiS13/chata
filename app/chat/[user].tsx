@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { KeyboardGestureArea, KeyboardStickyView, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
@@ -29,21 +29,25 @@ export default function ChatScreen() {
 
     const chatMessages = getMessages(user as string);
 
+    const flatListRef = useRef<FlatList>(null);
+
     const handleSend = async () => {
         if (message.trim()) {
             await sendMessage(user as string, message);
             setMessage('');
+            // Scroll to bottom after sending
+            setTimeout(() => {
+                flatListRef.current?.scrollToEnd({ animated: true });
+            }, 100);
         }
     };
 
-    const animatedListStyle = useAnimatedStyle(() => ({
-        marginBottom: height.value,
+    const animatedFooterStyle = useAnimatedStyle(() => ({
+        height: height.value + 100, // Keyboard height + input height + buffer
     }));
 
     const animatedInputContainerStyle = useAnimatedStyle(() => {
         return {
-            // Keep padding constant to avoid jumps.
-            // The offset in KeyboardStickyView will handle the positioning.
             paddingBottom: insets.bottom + 10,
         };
     });
@@ -65,30 +69,32 @@ export default function ChatScreen() {
             }} />
 
             <KeyboardGestureArea style={{ flex: 1 }} interpolator="ios">
-                <Animated.View style={[{ flex: 1 }, animatedListStyle]}>
-                    <FlatList
-                        data={chatMessages}
-                        keyExtractor={(item: any) => item.id}
-                        renderItem={({ item }: { item: any }) => (
-                            <View style={[
-                                styles.messageBubble,
-                                item.sender === session ? styles.myMessage : styles.theirMessage
-                            ]}>
-                                <Text style={styles.messageText}>{item.text}</Text>
-                                <Text style={styles.timestampText}>
-                                    {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </Text>
-                            </View>
-                        )}
-                        contentContainerStyle={styles.messageList}
-                        inverted={false}
-                        keyboardDismissMode="interactive"
-                        keyboardShouldPersistTaps="handled"
-                    />
-                </Animated.View>
+                <FlatList
+                    ref={flatListRef}
+                    data={chatMessages}
+                    keyExtractor={(item: any) => item.id}
+                    renderItem={({ item }: { item: any }) => (
+                        <View style={[
+                            styles.messageBubble,
+                            item.sender === session ? styles.myMessage : styles.theirMessage
+                        ]}>
+                            <Text style={styles.messageText}>{item.text}</Text>
+                            <Text style={styles.timestampText}>
+                                {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </Text>
+                        </View>
+                    )}
+                    contentContainerStyle={styles.messageList}
+                    inverted={false}
+                    keyboardDismissMode="interactive"
+                    keyboardShouldPersistTaps="handled"
+                    onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                    onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
+                    ListFooterComponent={<Animated.View style={animatedFooterStyle} />}
+                />
             </KeyboardGestureArea>
 
-            <KeyboardStickyView offset={{ closed: 0, opened: insets.bottom }}>
+            <KeyboardStickyView offset={{ closed: 0, opened: insets.bottom }} style={{ position: 'absolute', bottom: 0, width: '100%' }}>
                 <Animated.View style={[styles.inputContainer, animatedInputContainerStyle]}>
                     <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
                     <TextInput
